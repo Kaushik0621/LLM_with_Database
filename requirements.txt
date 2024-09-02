@@ -1,0 +1,6 @@
+fastapi
+uvicorn
+sqlite3
+openai
+python-dotenv
+google.generativeai
