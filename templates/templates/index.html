@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dictionary App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+        }
+        .container {
+            display: flex;
+            width: 100%;
+        }
+        .sidebar {
+            width: 20%;
+            background-color: #f4f4f4;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .sidebar h2 {
+            margin-top: 0;
+        }
+        .sidebar ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        .sidebar ul li {
+            margin: 15px 0;
+        }
+        .sidebar ul li a {
+            text-decoration: none;
+            color: #333;
+        }
+        .divider {
+            width: 1px;
+            background-color: #ddd;
+        }
+        .content {
+            width: 79%;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .content-section {
+            display: none;
+        }
+        .content-section.active {
+            display: block;
+        }
+        #dictionaryList, #historyList {
+            list-style-type: none;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Left Section: Sidebar -->
+        <div class="sidebar">
+            <h2>Dictionary App</h2>
+            <ul>
+                <li><a href="#" id="searchWordLink">Search Word</a></li>
+                <li><a href="#" id="wholeDictionaryLink">Whole Dictionary</a></li>
+                <li><a href="#" id="searchHistoryLink">Search History</a></li>
+            </ul>
+        </div>
+
+        <!-- Vertical Divider Line -->
+        <div class="divider"></div>
+
+        <!-- Right Section: Content Area -->
+        <div class="content">
+            <div id="searchWord" class="content-section active">
+                <h2>Search Word</h2>
+                <form id="wordForm">
+                    <label for="word">Enter a word:</label>
+                    <input type="text" id="word" name="word" required>
+                    <button type="submit">Get Meaning</button>
+                </form>
+                <p id="meaning"></p>
+            </div>
+
+            <div id="wholeDictionary" class="content-section">
+                <h2>Whole Dictionary</h2>
+                <ul id="dictionaryList">
+                    <!-- Dictionary entries will be populated here -->
+                </ul>
+            </div>
+
+            <div id="searchHistory" class="content-section">
+                <h2>Search History</h2>
+                <button id="clearHistoryButton">Clear History</button>
+                <ul id="historyList">
+                    <!-- Search history will be populated here -->
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // JavaScript to handle the dynamic content switching
+        document.getElementById('searchWordLink').addEventListener('click', function(event) {
+            event.preventDefault();
+            setActiveSection('searchWord');
+        });
+
+        document.getElementById('wholeDictionaryLink').addEventListener('click', function(event) {
+            event.preventDefault();
+            setActiveSection('wholeDictionary');
+            loadWholeDictionary();
+        });
+
+        document.getElementById('searchHistoryLink').addEventListener('click', function(event) {
+            event.preventDefault();
+            setActiveSection('searchHistory');
+            loadSearchHistory();
+        });
+
+        function setActiveSection(sectionId) {
+            // Hide all sections
+            document.querySelectorAll('.content-section').forEach(function(section) {
+                section.style.display = 'none';
+            });
+            // Show the selected section
+            document.getElementById(sectionId).style.display = 'block';
+        }
+
+        // Handle the search word form submission
+        document.getElementById('wordForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const word = document.getElementById('word').value;
+            const response = await fetch(`/meaning/${word}`);
+            const data = await response.json();
+            document.getElementById('meaning').innerText = data.meaning;
+            addToSearchHistory(word);
+        });
+
+        // Load the whole dictionary
+        async function loadWholeDictionary() {
+            const response = await fetch(`/whole-dictionary`);
+            const dictionary = await response.json();
+            const dictionaryList = document.getElementById('dictionaryList');
+            dictionaryList.innerHTML = '';
+            dictionary.forEach(entry => {
+                const li = document.createElement('li');
+                li.textContent = `${entry.word}: ${entry.meaning}`;
+                dictionaryList.appendChild(li);
+            });
+        }
+
+        // Load search history from local storage
+        function loadSearchHistory() {
+            const historyList = document.getElementById('historyList');
+            const history = JSON.parse(localStorage.getItem('searchHistory')) || [];
+            historyList.innerHTML = '';
+            history.forEach(word => {
+                const li = document.createElement('li');
+                li.textContent = word;
+                historyList.appendChild(li);
+            });
+        }
+
+        // Clear search history from local storage
+        document.getElementById('clearHistoryButton').addEventListener('click', function() {
+            localStorage.removeItem('searchHistory');
+            loadSearchHistory(); // Refresh the history list
+        });
+
+        // Add a word to search history in local storage
+        function addToSearchHistory(word) {
+            let history = JSON.parse(localStorage.getItem('searchHistory')) || [];
+            if (!history.includes(word)) {
+                history.push(word);
+                localStorage.setItem('searchHistory', JSON.stringify(history));
+            }
+        }
+
+        // Initialize by showing only the search word section
+        setActiveSection('searchWord');
+    </script>
+</body>
+</html>
